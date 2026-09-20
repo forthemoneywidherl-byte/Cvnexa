@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Login Admin — CVNexa</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header class="pagehead"><a href="index.html">‹</a><h1>Login Admin</h1><span></span></header>
+<main class="formwrap">
+<div class="login-card">
+<div class="lock">🔐</div>
+<h2>Area Admin</h2>
+<p>Halaman ini khusus pemilik toko.</p>
+<form id="login">
+<label>Username<input id="user" autocomplete="username" required placeholder="Username admin"></label>
+<label>Password<input id="pass" type="password" autocomplete="current-password" required placeholder="Password admin"></label>
+<button class="submit" type="submit">Masuk ke Dashboard</button>
+<p id="error" class="error"></p>
+</form>
+</div>
+</main>
+<script>
+const ADMIN_USER="admin";
+const ADMIN_PASS="CVNexa123";
+if(sessionStorage.getItem("cv_admin_login")==="yes") location.href="admin.html";
+document.getElementById("login").onsubmit=e=>{
+ e.preventDefault();
+ if(document.getElementById("user").value===ADMIN_USER && document.getElementById("pass").value===ADMIN_PASS){
+   sessionStorage.setItem("cv_admin_login","yes"); location.href="admin.html";
+ } else document.getElementById("error").textContent="Username atau password salah.";
+};
+</script>
+</body></html>

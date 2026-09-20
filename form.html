@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Isi Data CV — CVNexa</title><link rel="stylesheet" href="style.css"></head>
+<body><header class="pagehead"><button onclick="history.back()">‹</button><h1>Isi Data CV</h1><span></span></header>
+<main class="formwrap"><div id="chosen" class="chosen"></div><div class="notice">📌 Data akan dikirim ke WhatsApp admin dan CV dibuat mengikuti <b>template yang kamu pilih</b>.</div>
+<form id="cvForm"><h2>Data pribadi</h2>
+<label>Nama lengkap<input name="name" required placeholder="Contoh: Widi Herlambang"></label>
+<label>No. WhatsApp<input name="phone" required placeholder="08xxxxxxxxxx" inputmode="tel"></label>
+<label>Email<input name="email" type="email" placeholder="nama@email.com"></label>
+<label>Alamat<input name="address" placeholder="Kota / alamat singkat"></label>
+<label>Posisi yang dilamar<input name="position" required placeholder="Contoh: Barista"></label>
+<h2>Pendidikan</h2><label>Pendidikan terakhir<textarea name="education" required placeholder="Contoh: SMK Pasundan, 2016–2019"></textarea></label>
+<h2>Pengalaman kerja</h2><label>Pengalaman kerja<textarea name="experience" required placeholder="Nama perusahaan, posisi, tahun, dan tugas"></textarea></label>
+<h2>Skill & profil</h2><label>Skill<textarea name="skills" required placeholder="Contoh: Leadership, komunikasi, teamwork"></textarea></label>
+<label>Tentang saya<textarea name="about" placeholder="Deskripsi singkat tentang diri kamu"></textarea></label>
+<label>Informasi tambahan<textarea name="notes" placeholder="Sertifikat, bahasa, referensi, atau permintaan khusus"></textarea></label>
+<div class="check"><input id="agree" type="checkbox" required><label for="agree">Saya sudah memilih template yang benar.</label></div>
+<button class="submit" type="submit">📱 Lanjut ke Konfirmasi</button></form></main>
+<script src="app.js"></script><script>
+const id=new URLSearchParams(location.search).get("template")||localStorage.getItem("selected_template")||"cv1";
+const t=getAllTemplates().find(x=>x.id===id)||getAllTemplates()[0];
+document.getElementById("chosen").innerHTML=`<div class="thumb"><img src="${t.image}"></div><div><span class="eyebrow">TEMPLATE DIPILIH</span><h2>${esc(t.name)}</h2><p>${esc(t.category)} • ${money(t.price)}</p></div>`;
+document.getElementById("cvForm").addEventListener("submit",e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));data.template=t.id;data.templateName=t.name;data.price=t.price;localStorage.setItem("cv_order",JSON.stringify(data));location.href="konfirmasi.html"});
+</script></body></html>
