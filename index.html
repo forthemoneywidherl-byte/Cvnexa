@@ -6,5 +6,14 @@
 <div class="chips"><button class="chip active" onclick="setCategory('Semua',this)">Semua</button><button class="chip" onclick="setCategory('ATS',this)">ATS</button><button class="chip" onclick="setCategory('Modern',this)">Modern</button><button class="chip" onclick="setCategory('Creative',this)">Creative</button><button class="chip" onclick="setCategory('Formal',this)">Formal</button></div>
 <main><section class="intro"><p class="eyebrow">PILIH DESAIN CV</p><h1>Pilih CV yang kamu suka</h1><p>Lihat contoh CV terlebih dahulu. Jika cocok, tekan <b>Pilih Template</b> lalu isi data kamu.</p></section><div class="resultbar"><b id="count">0 template</b><span>Contoh desain</span></div><section class="grid" id="grid"></section></main>
 <nav class="bottom"><a class="active" href="index.html">⌂<small>Template</small></a><a href="pesanan.html">▣<small>Pesanan</small></a><a href="kontak.html">◉<small>Admin</small></a></nav>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script <script src="app_supabase_final.js"></script>
-</body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js?v=3"></script>
+
+<script>
+window.supabaseClient = window.supabase.createClient(
+  "https://mblhvvaqbcfcuaawpejf.supabase.co",
+  "sb_publishable_2pcWqpRdAzcDDs_4B3YfYA_QC7HCIVz"
+);
+
+const supabaseClient = window.supabaseClient;
+</script>
