@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Template — CVNexa</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="pagehead">
+  <a href="index.html">‹</a>
+  <h1>Kelola Template</h1>
+  <span></span>
+</header>
+
+<main class="formwrap">
+
+  <div style="text-align:right;margin-bottom:10px">
+    <button class="adminlogout"
+      onclick="sessionStorage.removeItem('cv_admin_login');location.href='login.html'">
+      Keluar
+    </button>
+  </div>
+
+  <script>
+    if(sessionStorage.getItem("cv_admin_login") !== "yes"){
+      location.href = "login.html";
+    }
+  </script>
+
+  <div class="adminintro">
+    <span>⚙️</span>
+    <div>
+      <h2>Tambah Template CV</h2>
+      <p>Template disimpan online agar muncul di semua HP.</p>
+    </div>
+  </div>
+
+  <form id="templateForm">
+
+    <label>
+      Nama template
+      <input name="name" required placeholder="Contoh: CV Elegant Blue">
+    </label>
+
+    <label>
+      Kategori
+      <select name="category">
+        <option>ATS</option>
+        <option>Modern</option>
+        <option>Creative</option>
+        <option>Formal</option>
+      </select>
+    </label>
+
+    <label>
+      Harga
+      <input name="price" required type="number" min="0" placeholder="50000">
+    </label>
+
+    <label>
+      Gambar CV
+      <input id="image" type="file" accept="image/*" required>
+    </label>
+
+    <div id="preview" class="uploadpreview">
+      Pilih gambar CV untuk melihat preview.
+    </div>
+
+    <button class="submit" type="submit">
+      ＋ Tambahkan ke Katalog
+    </button>
+
+  </form>
+
+  <h2 class="listtitle">Template tambahan</h2>
+
+  <div id="customList">
+    <div class="empty smallempty">Memuat template...</div>
+  </div>
+
+  <div class="notice">
+    ☁️ Template disimpan di Supabase Database + Storage.
+    Template dapat muncul di perangkat lain.
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* Koneksi admin dibuat langsung di admin.html */
+const ADMIN_SUPABASE_URL =
+  "https://mblhvvaqbcfcuaawpejf.supabase.co";
+
+const ADMIN_SUPABASE_KEY =
+  "sb_publishable_2pcWqpRdAzcDDs_4B3YfYA_QC7HCIVz";
+
+const adminDB =
+  window.supabase.createClient(
+    ADMIN_SUPABASE_URL,
+    ADMIN_SUPABASE_KEY
+  );
+
+const input = document.getElementById("image");
+const preview = document.getElementById("preview");
+
+input.addEventListener("change", function(){
+  const file = input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(){
+    preview.innerHTML =
+      '<img src="' + reader.result + '" alt="Preview">';
+  };
+
+  reader.readAsDataURL(file);
+});
+
+function moneyAdmin(n){
+  return "Rp" +
+    new Intl.NumberFormat("id-ID").format(Number(n) || 0);
+}
+
+function escAdmin(s=""){
+  return String(s).replace(/[&<>"']/g, m => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  }[m]));
+}
+
+let cloudTemplates = [];
+
+async function renderAdmin(){
+
+  const list = document.getElementById("customList");
+
+  list.innerHTML =
+    '<div class="empty smallempty">Memuat template...</div>';
+
+  const result = await adminDB
+    .from("cv_templates")
+    .select("*")
+    .order("created_at",{ascending:true});
+
+  if(result.error){
+    console.error(result.error);
+
+    list.innerHTML =
+      '<div class="empty smallempty">' +
+      'Gagal memuat: ' +
+      escAdmin(result.error.message) +
+      '</div>';
+
+    return;
+  }
+
+  cloudTemplates = result.data || [];
+
+  if(!cloudTemplates.length){
+    list.innerHTML =
+      '<div class="empty smallempty">' +
+      'Belum ada template tambahan.' +
+      '</div>';
+    return;
+  }
+
+  list.innerHTML = cloudTemplates.map(t => `
+    <div class="adminitem">
+      <img src="${t.image_url}" alt="${escAdmin(t.name)}">
+
+      <div>
+        <b>${escAdmin(t.name)}</b>
+        <small>
+          ${escAdmin(t.category)} • ${moneyAdmin(t.price)}
+        </small>
+      </div>
+
+      <button onclick="removeTemplate('${t.id}')">
+        Hapus
+      </button>
+    </div>
+  `).join("");
+}
+
+async function removeTemplate(id){
+
+  if(!confirm("Hapus template ini dari katalog?")) return;
+
+  const item = cloudTemplates.find(
+    x => String(x.id) === String(id)
+  );
+
+  if(!item) return;
+
+  const result = await adminDB
+    .from("cv_templates")
+    .delete()
+    .eq("id",id);
+
+  if(result.error){
+    alert(
+      "Gagal menghapus template: " +
+      result.error.message
+    );
+    return;
+  }
+
+  if(item.storage_path){
+    const removeResult = await adminDB
+      .storage
+      .from("cv-templates")
+      .remove([item.storage_path]);
+
+    if(removeResult.error){
+      console.warn(
+        "Data terhapus, tetapi gambar gagal dihapus:",
+        removeResult.error
+      );
+    }
+  }
+
+  await renderAdmin();
+
+  alert("Template berhasil dihapus.");
+}
+
+document.getElementById("templateForm")
+.addEventListener("submit", async function(e){
+
+  e.preventDefault();
+
+  const form = e.target;
+  const data = new FormData(form);
+  const file = input.files[0];
+
+  if(!file){
+    alert("Pilih gambar CV terlebih dahulu.");
+    return;
+  }
+
+  if(!file.type.startsWith("image/")){
+    alert("File harus berupa gambar.");
+    return;
+  }
+
+  if(file.size > 6 * 1024 * 1024){
+    alert("Ukuran gambar maksimal 6 MB.");
+    return;
+  }
+
+  const button =
+    form.querySelector('button[type="submit"]');
+
+  button.disabled = true;
+  button.textContent = "Mengupload...";
+
+  let uploadedPath = null;
+
+  try{
+
+    const safeName =
+      file.name
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g,"-");
+
+    const path =
+      Date.now() + "-" + safeName;
+
+    uploadedPath = path;
+
+    /* Upload gambar */
+    const upload =
+      await adminDB
+      .storage
+      .from("cv-templates")
+      .upload(
+        path,
+        file,
+        {
+          cacheControl:"3600",
+          upsert:false,
+          contentType:file.type
+        }
+      );
+
+    if(upload.error){
+      throw upload.error;
+    }
+
+    /* Ambil URL publik */
+    const publicURL =
+      adminDB
+      .storage
+      .from("cv-templates")
+      .getPublicUrl(path)
+      .data
+      .publicUrl;
+
+    /* Simpan data template */
+    const insert =
+      await adminDB
+      .from("cv_templates")
+      .insert({
+        name:data.get("name"),
+        category:data.get("category"),
+        price:Number(data.get("price")),
+        image_url:publicURL,
+        storage_path:path
+      });
+
+    if(insert.error){
+      throw insert.error;
+    }
+
+    form.reset();
+
+    preview.innerHTML =
+      "Pilih gambar CV untuk melihat preview.";
+
+    await renderAdmin();
+
+    alert(
+      "Template berhasil ditambahkan dan tersimpan online!"
+    );
+
+  }catch(error){
+
+    console.error("CVNexa upload error:",error);
+
+    /* Hapus gambar jika database gagal */
+    if(uploadedPath){
+      await adminDB
+        .storage
+        .from("cv-templates")
+        .remove([uploadedPath]);
+    }
+
+    alert(
+      "Gagal menambahkan template: " +
+      (error.message || error)
+    );
+
+  }finally{
+
+    button.disabled = false;
+    button.textContent =
+      "＋ Tambahkan ke Katalog";
+
+  }
+
+});
+
+renderAdmin();
+</script>
+
+</body>
+</html>
